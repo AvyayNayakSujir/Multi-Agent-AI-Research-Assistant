@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     TAVILY_API_KEY: str = ""
     API_KEY: str = "dev-api-key"
     RATE_LIMIT: str = "10/minute"
+    AGENT_TIMEOUT: int = 90
     LOG_LEVEL: str | None = None
 
     @model_validator(mode="after")

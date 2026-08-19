@@ -1,4 +1,5 @@
 from app.agents.base import invoke_with_timeout
+from app.core.config import settings
 from app.core.logging import get_logger
 from app.prompts.writer_prompt import REVISION_PROMPT, WRITER_PROMPT
 from app.services.llm_service import get_llm
@@ -78,7 +79,7 @@ def run_writer_agent(
     # Execute LLM call with generic timeout wrapper
     # ChatGroq returns an AIMessage, extract the content property.
     response = invoke_with_timeout(
-        lambda: chain.invoke(prompt_input), timeout_seconds=30
+        lambda: chain.invoke(prompt_input), timeout_seconds=settings.AGENT_TIMEOUT
     )
 
     draft = getattr(response, "content", str(response))

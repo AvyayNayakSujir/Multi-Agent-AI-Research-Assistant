@@ -1,6 +1,7 @@
 import concurrent.futures
 from typing import Any, Callable
 
+from app.core.config import settings
 from app.core.logging import get_logger
 from app.exceptions.custom_exceptions import AgentTimeoutError
 
@@ -10,7 +11,9 @@ from app.exceptions.custom_exceptions import AgentTimeoutError
 logger = get_logger(__name__)
 
 
-def invoke_with_timeout(llm_call: Callable[[], Any], timeout_seconds: int = 30) -> Any:
+def invoke_with_timeout(
+    llm_call: Callable[[], Any], timeout_seconds: int | None = None
+) -> Any:
     """Invokes an LLM or agent callable within a specified timeout limit.
 
     Runs the call inside a ThreadPoolExecutor.
@@ -32,13 +35,14 @@ def invoke_with_timeout(llm_call: Callable[[], Any], timeout_seconds: int = 30) 
     Raises:
         AgentTimeoutError: If execution exceeds the specified timeout limit.
     """
+    timeout = timeout_seconds if timeout_seconds is not None else settings.AGENT_TIMEOUT
     with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
         future = executor.submit(llm_call)
         try:
-            return future.result(timeout=timeout_seconds)
+            return future.result(timeout=timeout)
         except concurrent.futures.TimeoutError as exc:
-            logger.error(f"LLM call timed out after {timeout_seconds} seconds.")
+            logger.error(f"LLM call timed out after {timeout} seconds.")
             raise AgentTimeoutError(
-                message=f"Agent invocation timed out after {timeout_seconds} seconds.",
+                message=f"Agent invocation timed out after {timeout} seconds.",
                 status_code=504,
             ) from exc

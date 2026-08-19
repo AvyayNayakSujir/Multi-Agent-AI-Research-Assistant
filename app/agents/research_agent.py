@@ -1,4 +1,5 @@
 from app.agents.base import invoke_with_timeout
+from app.core.config import settings
 from app.core.logging import get_logger
 from app.exceptions.custom_exceptions import ToolExecutionError
 from app.models.agent_io import SearchQueries
@@ -34,7 +35,7 @@ def run_research_agent(query: str, max_results_per_query: int = 5) -> list[dict]
     # Execute LLM call with generic timeout wrapper
     logger.info(f"Generating search queries for user query: '{query}'")
     search_queries: SearchQueries = invoke_with_timeout(
-        lambda: chain.invoke({"question": query}), timeout_seconds=30
+        lambda: chain.invoke({"question": query}), timeout_seconds=settings.AGENT_TIMEOUT
     )
 
     if not search_queries or not search_queries.queries:

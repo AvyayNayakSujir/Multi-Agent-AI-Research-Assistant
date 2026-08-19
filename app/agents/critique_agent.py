@@ -1,4 +1,5 @@
 from app.agents.base import invoke_with_timeout
+from app.core.config import settings
 from app.core.logging import get_logger
 from app.models.agent_io import CritiqueOutput
 from app.prompts.critique_prompt import CRITIQUE_PROMPT
@@ -60,7 +61,7 @@ def run_critique_agent(query: str, draft: str, sources: list[dict]) -> CritiqueO
                 "sources_context": sources_context,
             }
         ),
-        timeout_seconds=30,
+        timeout_seconds=settings.AGENT_TIMEOUT,
     )
 
     feedback_preview = (

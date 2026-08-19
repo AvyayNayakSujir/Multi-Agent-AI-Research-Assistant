@@ -1,4 +1,5 @@
 from app.agents.base import invoke_with_timeout
+from app.core.config import settings
 from app.core.logging import get_logger
 from app.exceptions.custom_exceptions import ToolExecutionError
 from app.models.agent_io import CondensedContent
@@ -72,7 +73,7 @@ def run_reader_agent(
             logger.info(f"Condensing text for URL '{url}' using LLM")
             condensed: CondensedContent = invoke_with_timeout(
                 lambda: chain.invoke({"query": query, "text": scraped_text}),
-                timeout_seconds=30,
+                timeout_seconds=settings.AGENT_TIMEOUT,
             )
 
             if not condensed.is_relevant:
