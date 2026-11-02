@@ -7,14 +7,22 @@ from app.services.llm_service import get_llm
 
 logger = get_logger(__name__)
 
+MAX_SOURCE_CONTENT_LENGTH = 800
 
-def format_sources(sources: list[dict]) -> str:
-    """Formats a list of sources into a human-readable text context for the prompt."""
+
+def format_sources(
+    sources: list[dict], max_chars_per_source: int = MAX_SOURCE_CONTENT_LENGTH
+) -> str:
+    """Formats a list of sources into a human-readable text context for the prompt.
+
+    Truncates each source's relevant_content to max_chars_per_source (default 800 characters)
+    to keep prompt token sizes manageable and prevent exceeding LLM rate limits.
+    """
     formatted = []
     for idx, src in enumerate(sources):
         url = src.get("url", "No URL")
         title = src.get("title", "Untitled Source")
-        content = src.get("relevant_content", "")
+        content = (src.get("relevant_content") or "")[:max_chars_per_source]
         formatted.append(
             f"[{idx + 1}] Title: {title}\nURL: {url}\nContent: {content}\n"
         )

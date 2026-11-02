@@ -39,12 +39,9 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # Step 5: Install Railway CLI
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
-
-      # Step 6: Trigger Redeploy on Railway
-      - name: Trigger Redeploy on Railway
-        run: railway redeploy --service ${{ secrets.RAILWAY_SERVICE_NAME }} -y
+      # Step 5: Trigger Deploy on Render via Deploy Hook
+      - name: Trigger Render Deploy Hook
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL || secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          curl -f -X GET "$RENDER_DEPLOY_HOOK_URL"

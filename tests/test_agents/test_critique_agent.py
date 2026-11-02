@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from app.agents.critique_agent import run_critique_agent
+from app.agents.critique_agent import format_sources, run_critique_agent
 from app.exceptions.custom_exceptions import AgentTimeoutError
 from app.models.agent_io import CritiqueOutput
 
@@ -113,3 +113,62 @@ def test_run_critique_agent_timeout_propagation(mock_get_llm):
         run_critique_agent("Query", "Draft content", sources)
 
     assert "LLM call timed out" in str(exc_info.value)
+
+
+def test_format_sources_truncation():
+    """Verify format_sources truncates relevant_content to max_chars_per_source (default 800)."""
+    long_content = "X" * 1500
+    sources = [
+        {
+            "url": "https://source1.com",
+            "title": "Long Source",
+            "relevant_content": long_content,
+        },
+        {
+            "url": "https://source2.com",
+            "title": "Short Source",
+            "relevant_content": "Short text",
+        },
+    ]
+
+    formatted = format_sources(sources)
+    assert f"Content: {'X' * 800}\n" in formatted
+    assert "Content: Short text\n" in formatted
+    assert ("X" * 801) not in formatted
+
+    # Test custom max_chars_per_source
+    custom_formatted = format_sources(sources, max_chars_per_source=500)
+    assert f"Content: {'X' * 500}\n" in custom_formatted
+    assert ("X" * 501) not in custom_formatted
+
+
+@patch("app.agents.critique_agent.get_llm")
+def test_run_critique_agent_payload_truncation(mock_get_llm):
+    """Verify run_critique_agent truncates source content before sending to prompt chain."""
+    mock_llm = MagicMock()
+    mock_structured = MagicMock()
+    mock_structured.invoke.return_value = CritiqueOutput(
+        approved=True, feedback="Valid"
+    )
+    mock_structured.return_value = CritiqueOutput(approved=True, feedback="Valid")
+    mock_llm.with_structured_output.return_value = mock_structured
+    mock_get_llm.return_value = mock_llm
+
+    long_content = "A" * 2000
+    sources = [
+        {
+            "url": "https://example.com",
+            "title": "Article",
+            "relevant_content": long_content,
+        }
+    ]
+
+    result = run_critique_agent("Query", "Draft body", sources)
+    assert result.approved is True
+
+    # Check the prompt input passed to chain
+    assert mock_structured.call_count == 1
+    args, kwargs = mock_structured.call_args
+    prompt_str = str(args[0])
+    assert "A" * 800 in prompt_str
+    assert "A" * 801 not in prompt_str
