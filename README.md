@@ -92,9 +92,9 @@ ENVIRONMENT=development
 API_KEY=dev-api-key
 RATE_LIMIT=10/minute
 
-# LLM Providers (Swapped from Anthropic to Groq)
+# LLM Providers
 GROQ_API_KEY=gsk_...
-GROQ_MODEL=llama-3.3-70b-versatile
+GROQ_MODEL=openai/gpt-oss-120b
 
 # Search Integrations
 TAVILY_API_KEY=tvly_...
